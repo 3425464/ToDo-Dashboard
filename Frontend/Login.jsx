@@ -1,7 +1,3 @@
-login.jsx
-
-
-
 import axios from "axios";
 
 function Login({ onLogin }) {
