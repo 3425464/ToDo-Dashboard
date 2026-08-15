@@ -2,7 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "axios";
 
+const API_URL = "https://todo-backend-ezav.onrender.com/api/todos";
+
 function Todo() {
+
     const navigate = useNavigate();
 
     const [title, setTitle] = useState("");
@@ -13,31 +16,64 @@ function Todo() {
     const [editId, setEditId] = useState(null);
     const [editTitle, setEditTitle] = useState("");
 
-    const token = localStorage.getItem("token");
+    const getConfig = () => {
 
-    const API_URL = "http://localhost:3000/api/todos";
+        const token = localStorage.getItem("token");
 
-    // Get Todos
+        return {
+            headers: {
+                Authorization: `Bearer ${token}`
+            }
+        };
+    };
+
+    // =========================
+    // GET TODOS
+    // =========================
+
     const getTodo = async () => {
+
         try {
+
             setLoading(true);
             setError("");
 
-            const response = await axios.get(API_URL, {
-                headers: {
-                    Authorization: `Bearer ${token}`
-                }
-            });
+            const response = await axios.get(
+                API_URL,
+                getConfig()
+            );
 
-            setTodos(response.data);
+            console.log("Todos response:", response.data);
+
+            if (Array.isArray(response.data)) {
+
+                setTodos(response.data);
+
+            } else if (Array.isArray(response.data.todos)) {
+
+                setTodos(response.data.todos);
+
+            } else if (Array.isArray(response.data.data)) {
+
+                setTodos(response.data.data);
+
+            } else {
+
+                setTodos([]);
+            }
 
         } catch (error) {
-            console.log(error);
 
-            if (error.response?.status === 400 ||
-                error.response?.status === 401) {
+            console.error("Get Todo Error:", error);
+
+            if (
+                error.response?.status === 400 ||
+                error.response?.status === 401
+            ) {
 
                 localStorage.removeItem("token");
+                localStorage.removeItem("user");
+
                 navigate("/login");
 
                 return;
@@ -45,100 +81,151 @@ function Todo() {
 
             setError(
                 error.response?.data?.message ||
-                "Failed to load tasks"
+                "Failed to load todos"
             );
 
         } finally {
+
             setLoading(false);
         }
     };
 
+    // =========================
+    // CHECK LOGIN
+    // =========================
+
     useEffect(() => {
+
+        const token = localStorage.getItem("token");
+
         if (!token) {
+
             navigate("/login");
+
             return;
         }
 
         getTodo();
+
     }, []);
 
-    // Logout
+    // =========================
+    // LOGOUT
+    // =========================
+
     const logout = () => {
+
         localStorage.removeItem("token");
         localStorage.removeItem("user");
 
         navigate("/login");
     };
 
-    // Add Todo
+    // =========================
+    // ADD TODO
+    // =========================
+
     const addTodo = async (e) => {
+
         e.preventDefault();
 
         if (!title.trim()) {
+
             alert("Please enter a task");
+
             return;
         }
 
         try {
+
             await axios.post(
                 API_URL,
                 {
-                    title: title
+                    title: title.trim()
                 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
+                getConfig()
             );
 
             setTitle("");
 
-            getTodo();
+            await getTodo();
 
         } catch (error) {
-            console.log(error);
+
+            console.error("Add Todo Error:", error);
+
+            if (
+                error.response?.status === 400 ||
+                error.response?.status === 401
+            ) {
+
+                alert("Session expired. Please login again.");
+
+                logout();
+
+                return;
+            }
 
             alert(
                 error.response?.data?.message ||
-                "Failed to add a task"
+                "Failed to add task"
             );
         }
     };
 
-    // Start Edit
+    // =========================
+    // START EDIT
+    // =========================
+
     const startEdit = (todo) => {
+
         setEditId(todo._id);
         setEditTitle(todo.title);
     };
 
-    // Update Todo
+    // =========================
+    // UPDATE TODO
+    // =========================
+
     const updateTask = async (id) => {
+
         if (!editTitle.trim()) {
-            alert("Task title cannot be empty");
+
+            alert("Please enter a task");
+
             return;
         }
 
         try {
+
             await axios.put(
                 `${API_URL}/${id}`,
                 {
-                    title: editTitle
+                    title: editTitle.trim()
                 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
+                getConfig()
             );
 
             setEditId(null);
             setEditTitle("");
 
-            getTodo();
+            await getTodo();
 
         } catch (error) {
-            console.log(error);
+
+            console.error("Update Todo Error:", error);
+
+            if (
+                error.response?.status === 400 ||
+                error.response?.status === 401
+            ) {
+
+                alert("Session expired. Please login again.");
+
+                logout();
+
+                return;
+            }
 
             alert(
                 error.response?.data?.message ||
@@ -147,26 +234,40 @@ function Todo() {
         }
     };
 
-    // Toggle Todo
+    // =========================
+    // COMPLETE / UNCOMPLETE
+    // =========================
+
     const toggleTodo = async (todo) => {
+
         try {
+
             await axios.put(
                 `${API_URL}/${todo._id}`,
                 {
                     title: todo.title,
                     completed: !todo.completed
                 },
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
+                getConfig()
             );
 
-            getTodo();
+            await getTodo();
 
         } catch (error) {
-            console.log(error);
+
+            console.error("Toggle Todo Error:", error);
+
+            if (
+                error.response?.status === 400 ||
+                error.response?.status === 401
+            ) {
+
+                alert("Session expired. Please login again.");
+
+                logout();
+
+                return;
+            }
 
             alert(
                 error.response?.data?.message ||
@@ -175,22 +276,44 @@ function Todo() {
         }
     };
 
-    // Delete Todo
+    // =========================
+    // DELETE TODO
+    // =========================
+
     const deleteTodo = async (id) => {
+
+        const confirmDelete = window.confirm(
+            "Are you sure you want to delete this task?"
+        );
+
+        if (!confirmDelete) {
+            return;
+        }
+
         try {
+
             await axios.delete(
                 `${API_URL}/${id}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${token}`
-                    }
-                }
+                getConfig()
             );
 
-            getTodo();
+            await getTodo();
 
         } catch (error) {
-            console.log(error);
+
+            console.error("Delete Todo Error:", error);
+
+            if (
+                error.response?.status === 400 ||
+                error.response?.status === 401
+            ) {
+
+                alert("Session expired. Please login again.");
+
+                logout();
+
+                return;
+            }
 
             alert(
                 error.response?.data?.message ||
@@ -203,6 +326,7 @@ function Todo() {
         <div className="todo-container">
 
             <div className="todo-header">
+
                 <h1>Todo List</h1>
 
                 <button
@@ -211,7 +335,10 @@ function Todo() {
                 >
                     Logout
                 </button>
+
             </div>
+
+            {/* Add Todo */}
 
             <form onSubmit={addTodo}>
 
@@ -219,7 +346,9 @@ function Todo() {
                     type="text"
                     placeholder="Enter a new task"
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
+                    onChange={(e) =>
+                        setTitle(e.target.value)
+                    }
                 />
 
                 <button type="submit">
@@ -228,104 +357,135 @@ function Todo() {
 
             </form>
 
+            {/* Loading */}
+
             {loading && (
+
                 <p className="loading">
-                    Loading todos....
+                    Loading todos...
                 </p>
+
             )}
 
-            {error && (
+            {/* Error */}
+
+            {!loading && error && (
+
                 <p className="error">
                     {error}
                 </p>
+
             )}
 
-            {!loading && todos.length === 0 && (
-                <p>
-                    No Todo yet. Add your First Task in it
-                </p>
+            {/* Empty */}
+
+            {!loading &&
+                !error &&
+                todos.length === 0 && (
+
+                    <p>
+                        No Todo yet. Add your first task.
+                    </p>
+
+                )}
+
+            {/* Todo List */}
+
+            {!loading && (
+
+                <div className="todo-list">
+
+                    {todos.map((todo) => (
+
+                        <div
+                            className="todo-item"
+                            key={todo._id}
+                        >
+
+                            {editId === todo._id ? (
+
+                                <>
+
+                                    <input
+                                        type="text"
+                                        value={editTitle}
+                                        onChange={(e) =>
+                                            setEditTitle(
+                                                e.target.value
+                                            )
+                                        }
+                                    />
+
+                                    <button
+                                        onClick={() =>
+                                            updateTask(todo._id)
+                                        }
+                                    >
+                                        Save
+                                    </button>
+
+                                    <button
+                                        onClick={() => {
+                                            setEditId(null);
+                                            setEditTitle("");
+                                        }}
+                                    >
+                                        Cancel
+                                    </button>
+
+                                </>
+
+                            ) : (
+
+                                <>
+
+                                    <input
+                                        type="checkbox"
+                                        checked={
+                                            todo.completed || false
+                                        }
+                                        onChange={() =>
+                                            toggleTodo(todo)
+                                        }
+                                    />
+
+                                    <span
+                                        className={
+                                            todo.completed
+                                                ? "completed"
+                                                : ""
+                                        }
+                                    >
+                                        {todo.title}
+                                    </span>
+
+                                    <button
+                                        onClick={() =>
+                                            startEdit(todo)
+                                        }
+                                    >
+                                        Edit
+                                    </button>
+
+                                    <button
+                                        onClick={() =>
+                                            deleteTodo(todo._id)
+                                        }
+                                    >
+                                        Delete
+                                    </button>
+
+                                </>
+
+                            )}
+
+                        </div>
+
+                    ))}
+
+                </div>
+
             )}
-
-            <div>
-
-                {todos.map((todo) => (
-                    <div
-                        className="todo-item"
-                        key={todo._id}
-                    >
-
-                        {editId === todo._id ? (
-
-                            <>
-                                <input
-                                    value={editTitle}
-                                    onChange={(e) =>
-                                        setEditTitle(e.target.value)
-                                    }
-                                />
-
-                                <button
-                                    onClick={() =>
-                                        updateTask(todo._id)
-                                    }
-                                >
-                                    Save
-                                </button>
-
-                                <button
-                                    onClick={() => {
-                                        setEditId(null);
-                                        setEditTitle("");
-                                    }}
-                                >
-                                    Cancel
-                                </button>
-                            </>
-
-                        ) : (
-
-                            <>
-                                <input
-                                    type="checkbox"
-                                    checked={todo.completed}
-                                    onChange={() =>
-                                        toggleTodo(todo)
-                                    }
-                                />
-
-                                <span
-                                    className={
-                                        todo.completed
-                                            ? "completed"
-                                            : ""
-                                    }
-                                >
-                                    {todo.title}
-                                </span>
-
-                                <button
-                                    onClick={() =>
-                                        startEdit(todo)
-                                    }
-                                >
-                                    Edit
-                                </button>
-
-                                <button
-                                    onClick={() =>
-                                        deleteTodo(todo._id)
-                                    }
-                                >
-                                    Delete
-                                </button>
-                            </>
-
-                        )}
-
-                    </div>
-                ))}
-
-            </div>
 
         </div>
     );

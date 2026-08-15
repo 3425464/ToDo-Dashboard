@@ -1,6 +1,9 @@
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-function Login({ onLogin }) {
+function Login() {
+
+    const navigate = useNavigate();
 
     const submitData = async (e) => {
         e.preventDefault();
@@ -17,7 +20,7 @@ function Login({ onLogin }) {
                 data
             );
 
-            console.log(response.data);
+            console.log("Login response:", response.data);
 
             if (response.data.token) {
 
@@ -28,22 +31,31 @@ function Login({ onLogin }) {
 
                 alert("Login successful!");
 
-                onLogin();
+                navigate("/dashboard");
+
             } else {
-                alert("Login successful, but token was not received.");
+
+                alert(
+                    "Login successful, but token was not received."
+                );
             }
 
         } catch (error) {
 
-            console.log(error);
+            console.error("Login error:", error);
 
             if (error.response) {
+
                 alert(
                     error.response.data.message ||
                     "Invalid email or password"
                 );
+
             } else {
-                alert("Unable to connect to the server.");
+
+                alert(
+                    "Unable to connect to the server."
+                );
             }
         }
     };
@@ -60,6 +72,7 @@ function Login({ onLogin }) {
             <form onSubmit={submitData}>
 
                 <div className="input-group">
+
                     <label>Email</label>
 
                     <input
@@ -68,9 +81,11 @@ function Login({ onLogin }) {
                         placeholder="Enter your email"
                         required
                     />
+
                 </div>
 
                 <div className="input-group">
+
                     <label>Password</label>
 
                     <input
@@ -79,6 +94,7 @@ function Login({ onLogin }) {
                         placeholder="Enter your password"
                         required
                     />
+
                 </div>
 
                 <button

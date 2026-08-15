@@ -1,9 +1,9 @@
-Register.jsx
-
-
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
-function Register({ onRegister }) {
+function Register() {
+
+    const navigate = useNavigate();
 
     const submitData = async (e) => {
         e.preventDefault();
@@ -17,29 +17,32 @@ function Register({ onRegister }) {
         try {
 
             const response = await axios.post(
-                "http://localhost:3000/api/auth/register",
+                "https://todo-backend-ezav.onrender.com/api/auth/register",
                 data
             );
 
-            console.log(response.data);
+            console.log("Register response:", response.data);
 
             alert("Registration successful!");
 
-            if (onRegister) {
-                onRegister();
-            }
+            navigate("/login");
 
         } catch (error) {
 
-            console.log(error);
+            console.error("Registration error:", error);
 
             if (error.response) {
+
                 alert(
                     error.response.data.message ||
                     "Registration failed"
                 );
+
             } else {
-                alert("Unable to connect to the server.");
+
+                alert(
+                    "Unable to connect to the server."
+                );
             }
         }
     };
@@ -56,6 +59,7 @@ function Register({ onRegister }) {
             <form onSubmit={submitData}>
 
                 <div className="input-group">
+
                     <label>Name</label>
 
                     <input
@@ -64,9 +68,11 @@ function Register({ onRegister }) {
                         placeholder="Enter your name"
                         required
                     />
+
                 </div>
 
                 <div className="input-group">
+
                     <label>Email</label>
 
                     <input
@@ -75,9 +81,11 @@ function Register({ onRegister }) {
                         placeholder="Enter your email"
                         required
                     />
+
                 </div>
 
                 <div className="input-group">
+
                     <label>Password</label>
 
                     <input
@@ -86,6 +94,7 @@ function Register({ onRegister }) {
                         placeholder="Create a password"
                         required
                     />
+
                 </div>
 
                 <button

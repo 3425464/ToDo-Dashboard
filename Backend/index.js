@@ -13,7 +13,15 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
+// Health check
+app.get("/", (req, res) => {
+    res.status(200).json({
+        message: "Todo backend is running",
+        status: "ok"
+    });
+});
+
+// API routes
 app.use("/api/auth", userRouter);
 app.use("/api/todos", todoRouter);
 
@@ -24,10 +32,12 @@ mongoose
         console.log("MongoDB connected");
     })
     .catch((error) => {
-        console.log("MongoDB connection error:", error.message);
+        console.error("MongoDB connection error:", error.message);
     });
 
 // Server
-app.listen(process.env.PORT, () => {
-    console.log(`Server running on port ${process.env.PORT}`);
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
 });
