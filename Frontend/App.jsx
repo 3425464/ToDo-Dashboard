@@ -1,8 +1,12 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import {
+    Routes,
+    Route,
+    Navigate
+} from "react-router-dom";
 
 import Login from "./Components/Login";
 import Register from "./Components/Register";
-import Dashboard from "./Components/Todo";
+import Todo from "./Components/Todo";
 
 function App() {
     const token = localStorage.getItem("token");
@@ -13,11 +17,9 @@ function App() {
             <Route
                 path="/"
                 element={
-                    token ? (
-                        <Navigate to="/dashboard" replace />
-                    ) : (
-                        <Navigate to="/login" replace />
-                    )
+                    token
+                        ? <Navigate to="/dashboard" replace />
+                        : <Navigate to="/login" replace />
                 }
             />
 
@@ -33,7 +35,7 @@ function App() {
 
             <Route
                 path="/dashboard"
-                element={<Dashboard />}
+                element={<Todo />}
             />
 
             <Route

@@ -2,109 +2,135 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
 function Login() {
-
     const navigate = useNavigate();
 
     const submitData = async (e) => {
         e.preventDefault();
 
-        const data = {
-            email: e.target.email.value,
-            password: e.target.password.value
-        };
+        const email = e.target.email.value;
+        const password = e.target.password.value;
 
         try {
-
             const response = await axios.post(
                 "https://todo-backend-ezav.onrender.com/api/auth/login",
-                data
+                {
+                    email,
+                    password
+                }
             );
 
             console.log("Login response:", response.data);
 
             if (response.data.token) {
+                localStorage.setItem("token", response.data.token);
 
-                localStorage.setItem(
-                    "token",
-                    response.data.token
-                );
-
-                alert("Login successful!");
+                if (response.data.user) {
+                    localStorage.setItem(
+                        "user",
+                        JSON.stringify(response.data.user)
+                    );
+                }
 
                 navigate("/dashboard");
-
             } else {
-
-                alert(
-                    "Login successful, but token was not received."
-                );
+                alert("Login successful, but token was not received.");
             }
 
         } catch (error) {
-
             console.error("Login error:", error);
 
-            if (error.response) {
-
-                alert(
-                    error.response.data.message ||
-                    "Invalid email or password"
-                );
-
-            } else {
-
-                alert(
-                    "Unable to connect to the server."
-                );
-            }
+            alert(
+                error.response?.data?.message ||
+                "Invalid email or password"
+            );
         }
     };
 
     return (
-        <div className="auth-form">
+        <div className="auth-page">
 
-            <h2>Welcome Back</h2>
+            <div className="auth-card">
 
-            <p className="form-subtitle">
-                Login to manage your tasks
-            </p>
+                {/* Header */}
+                <div className="auth-header">
+                    <h1>ToDo Dashboard</h1>
+                    <p>
+                        Organize your tasks and stay productive.
+                    </p>
+                </div>
 
-            <form onSubmit={submitData}>
+                {/* Login / Register Tabs */}
+                <div className="auth-tabs">
 
-                <div className="input-group">
+                    <button
+                        type="button"
+                        className="auth-tab active"
+                        onClick={() => navigate("/login")}
+                    >
+                        Login
+                    </button>
 
-                    <label>Email</label>
-
-                    <input
-                        type="email"
-                        name="email"
-                        placeholder="Enter your email"
-                        required
-                    />
+                    <button
+                        type="button"
+                        className="auth-tab"
+                        onClick={() => navigate("/register")}
+                    >
+                        Register
+                    </button>
 
                 </div>
 
-                <div className="input-group">
+                {/* Login Form */}
+                <div className="auth-form">
 
-                    <label>Password</label>
+                    <h2>Welcome Back</h2>
 
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Enter your password"
-                        required
-                    />
+                    <p className="form-subtitle">
+                        Login to manage your tasks
+                    </p>
+
+                    <form onSubmit={submitData}>
+
+                        <div className="input-group">
+                            <label htmlFor="email">
+                                Email
+                            </label>
+
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                placeholder="Enter your email"
+                                required
+                            />
+                        </div>
+
+                        <div className="input-group">
+                            <label htmlFor="password">
+                                Password
+                            </label>
+
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                placeholder="Enter your password"
+                                required
+                            />
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="primary-button"
+                        >
+                            Login
+                        </button>
+
+                    </form>
 
                 </div>
 
-                <button
-                    type="submit"
-                    className="primary-button"
-                >
-                    Login
-                </button>
-
-            </form>
+            </div>
 
         </div>
     );

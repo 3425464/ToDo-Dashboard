@@ -1,110 +1,151 @@
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
-function Register() {
+const API_URL =
+    "https://todo-backend-ezav.onrender.com/api";
 
+function Register() {
     const navigate = useNavigate();
 
     const submitData = async (e) => {
         e.preventDefault();
 
-        const data = {
-            name: e.target.name.value,
-            email: e.target.email.value,
-            password: e.target.password.value
-        };
+        const name = e.target.name.value.trim();
+        const email = e.target.email.value.trim();
+        const password = e.target.password.value;
 
         try {
-
-            const response = await axios.post(
-                "https://todo-backend-ezav.onrender.com/api/auth/register",
-                data
+            await axios.post(
+                `${API_URL}/auth/register`,
+                {
+                    name,
+                    email,
+                    password
+                }
             );
-
-            console.log("Register response:", response.data);
 
             alert("Registration successful!");
 
             navigate("/login");
 
         } catch (error) {
+            console.error(
+                "Registration error:",
+                error
+            );
 
-            console.error("Registration error:", error);
-
-            if (error.response) {
-
-                alert(
-                    error.response.data.message ||
-                    "Registration failed"
-                );
-
-            } else {
-
-                alert(
-                    "Unable to connect to the server."
-                );
-            }
+            alert(
+                error.response?.data?.message ||
+                "Registration failed"
+            );
         }
     };
 
     return (
-        <div className="auth-form">
+        <div className="auth-page">
 
-            <h2>Create Account</h2>
+            <div className="auth-card">
 
-            <p className="form-subtitle">
-                Register to start managing your tasks
-            </p>
+                <div className="auth-header">
+                    <h1>ToDo Dashboard</h1>
 
-            <form onSubmit={submitData}>
+                    <p>
+                        Organize your tasks and stay productive.
+                    </p>
+                </div>
 
-                <div className="input-group">
+                <div className="auth-tabs">
 
-                    <label>Name</label>
+                    <button
+                        type="button"
+                        className="auth-tab"
+                        onClick={() =>
+                            navigate("/login")
+                        }
+                    >
+                        Login
+                    </button>
 
-                    <input
-                        type="text"
-                        name="name"
-                        placeholder="Enter your name"
-                        required
-                    />
+                    <button
+                        type="button"
+                        className="auth-tab active"
+                    >
+                        Register
+                    </button>
 
                 </div>
 
-                <div className="input-group">
+                <div className="auth-form">
 
-                    <label>Email</label>
+                    <h2>Create Account</h2>
 
-                    <input
-                        type="email"
-                        name="email"
-                        placeholder="Enter your email"
-                        required
-                    />
+                    <p className="form-subtitle">
+                        Register to start managing your tasks
+                    </p>
+
+                    <form onSubmit={submitData}>
+
+                        <div className="form-group">
+
+                            <label htmlFor="name">
+                                Name
+                            </label>
+
+                            <input
+                                id="name"
+                                name="name"
+                                type="text"
+                                placeholder="Enter your name"
+                                required
+                            />
+
+                        </div>
+
+                        <div className="form-group">
+
+                            <label htmlFor="email">
+                                Email
+                            </label>
+
+                            <input
+                                id="email"
+                                name="email"
+                                type="email"
+                                placeholder="Enter your email"
+                                required
+                            />
+
+                        </div>
+
+                        <div className="form-group">
+
+                            <label htmlFor="password">
+                                Password
+                            </label>
+
+                            <input
+                                id="password"
+                                name="password"
+                                type="password"
+                                placeholder="Create a password"
+                                minLength="6"
+                                required
+                            />
+
+                        </div>
+
+                        <button
+                            type="submit"
+                            className="primary-button"
+                        >
+                            Create Account
+                        </button>
+
+                    </form>
 
                 </div>
 
-                <div className="input-group">
-
-                    <label>Password</label>
-
-                    <input
-                        type="password"
-                        name="password"
-                        placeholder="Create a password"
-                        required
-                    />
-
-                </div>
-
-                <button
-                    type="submit"
-                    className="primary-button"
-                >
-                    Create Account
-                </button>
-
-            </form>
+            </div>
 
         </div>
     );
