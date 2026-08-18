@@ -1,70 +1,99 @@
+const mongoose = require("mongoose");
 const Todo = require("../models/todo.model");
 
-// Create Todo
+
 const createTodo = async (req, res) => {
     try {
         const { title } = req.body;
 
-        if (!title) {
+        if (!title || !title.trim()) {
             return res.status(400).json({
                 message: "Title is required"
             });
         }
 
-        const todo = new Todo({
-            title,
+        const todo = await Todo.create({
+            title: title.trim(),
             user: req.user.id
         });
 
-        await todo.save();
-
         res.status(201).json({
-            message: "Todo Created Successfully",
+            message: "Todo created successfully",
             todo
         });
 
     } catch (error) {
+        console.error("Create Todo error:", error);
+
         res.status(500).json({
-            message: error.message
+            message: "Failed to create todo"
         });
     }
 };
 
 
-// Get all Todos of logged-in user
 const getTodos = async (req, res) => {
     try {
         const todos = await Todo.find({
             user: req.user.id
+        }).sort({
+            createdAt: -1
         });
 
         res.status(200).json(todos);
 
     } catch (error) {
+        console.error("Get Todos error:", error);
+
         res.status(500).json({
-            message: error.message
+            message: "Failed to get todos"
         });
     }
 };
 
 
-// Update Todo
 const updateTodo = async (req, res) => {
     try {
         const { id } = req.params;
         const { title, completed } = req.body;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid todo ID"
+            });
+        }
+
+        const updateData = {};
+
+        if (title !== undefined) {
+            if (!title.trim()) {
+                return res.status(400).json({
+                    message: "Title cannot be empty"
+                });
+            }
+
+            updateData.title = title.trim();
+        }
+
+        if (completed !== undefined) {
+            updateData.completed = Boolean(completed);
+        }
+
+        if (Object.keys(updateData).length === 0) {
+            return res.status(400).json({
+                message: "Nothing to update"
+            });
+        }
 
         const todo = await Todo.findOneAndUpdate(
             {
                 _id: id,
                 user: req.user.id
             },
+            updateData,
             {
-                title,
-                completed
-            },
-            {
-                new: true
+                new: true,
+                runValidators: true
             }
         );
 
@@ -75,22 +104,29 @@ const updateTodo = async (req, res) => {
         }
 
         res.status(200).json({
-            message: "Todo Updated Successfully",
+            message: "Todo updated successfully",
             todo
         });
 
     } catch (error) {
+        console.error("Update Todo error:", error);
+
         res.status(500).json({
-            message: error.message
+            message: "Failed to update todo"
         });
     }
 };
 
 
-// Delete Todo
 const deleteTodo = async (req, res) => {
     try {
         const { id } = req.params;
+
+        if (!mongoose.Types.ObjectId.isValid(id)) {
+            return res.status(400).json({
+                message: "Invalid todo ID"
+            });
+        }
 
         const todo = await Todo.findOneAndDelete({
             _id: id,
@@ -104,12 +140,14 @@ const deleteTodo = async (req, res) => {
         }
 
         res.status(200).json({
-            message: "Todo Deleted Successfully"
+            message: "Todo deleted successfully"
         });
 
     } catch (error) {
+        console.error("Delete Todo error:", error);
+
         res.status(500).json({
-            message: error.message
+            message: "Failed to delete todo"
         });
     }
 };

@@ -9,11 +9,16 @@ const todoRouter = require("./routes/todo.routes");
 
 const app = express();
 
-// Middleware
-app.use(cors());
+app.use(
+    cors({
+        origin: "*",
+        methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        allowedHeaders: ["Content-Type", "Authorization"]
+    })
+);
+
 app.use(express.json());
 
-// Health check
 app.get("/", (req, res) => {
     res.status(200).json({
         message: "Todo backend is running",
@@ -21,23 +26,40 @@ app.get("/", (req, res) => {
     });
 });
 
-// API routes
+app.get("/api/health", (req, res) => {
+    res.status(200).json({
+        message: "API is healthy"
+    });
+});
+
 app.use("/api/auth", userRouter);
 app.use("/api/todos", todoRouter);
 
-// MongoDB connection
+const PORT = process.env.PORT || 3000;
+
+if (!process.env.URL) {
+    console.error("MongoDB URL is missing from .env");
+    process.exit(1);
+}
+
+if (!process.env.JWT_KEY) {
+    console.error("JWT_KEY is missing from .env");
+    process.exit(1);
+}
+
 mongoose
     .connect(process.env.URL)
     .then(() => {
-        console.log("MongoDB connected");
+        console.log("MongoDB connected successfully");
+
+        app.listen(PORT, () => {
+            console.log(`Server running on port ${PORT}`);
+        });
     })
     .catch((error) => {
-        console.error("MongoDB connection error:", error.message);
+        console.error(
+            "MongoDB connection error:",
+            error.message
+        );
+        process.exit(1);
     });
-
-// Server
-const PORT = process.env.PORT || 3000;
-
-app.listen(PORT, () => {
-    console.log(`Server running on port ${PORT}`);
-});
